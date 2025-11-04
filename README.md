@@ -197,31 +197,9 @@ lnbc50u1p5sn3fgpp5f432vrt88n6876wt6kx7en8xj7kv99rh7qd9fcm793y7y7vz92sssp5xk2eteg
 - Verify payment details before sending
 - Consider using testnet for development and testing
 
-## Development
-
-This client is based on the official Breez SDK Spark Go examples and implements:
-
-- **SDK Initialization**: Proper SDK connection and configuration
-- **Error Handling**: Comprehensive error handling with user-friendly messages
-- **Type Safety**: Proper Go type handling for all SDK operations
-- **Transaction Management**: Complete payment lifecycle support
-- **Multi-Asset Support**: Bitcoin and token balance management
-
 ## Requirements
 
 - Go 1.21+
 - Breez API credentials (`BREEZ_API_KEY`)
 - Valid mnemonic phrase (`BREEZ_MNEMONIC`)
-- Network connectivity for Lightning/Bitcoin operations
-
-**Environment Setup:**
-```bash
-# Minimum required .env file
-BREEZ_API_KEY=your_breez_api_key
-BREEZ_MNEMONIC="your twelve word mnemonic phrase"
-
-# Run the application
-./tiny-spark
-```
-
 
