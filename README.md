@@ -190,13 +190,6 @@ Payment Request:
 lnbc50u1p5sn3fgpp5f432vrt88n6876wt6kx7en8xj7kv99rh7qd9fcm793y7y7vz92sssp5xk2etegmu098jnza9aspfkgg39tm5ar2lndmpyjzd3ynuts8n2rqxq9z0rgqnp4qvyndeaqzman7h898jxm98dzkm0mlrsx36s93smrur7h0azyyuxc5rzjq25carzepgd4vqsyn44jrk85ezrpju92xyrk9apw4cdjh6yrwt5jgqqqqrt49lmtcqqqqqqqqqqq86qq9qrzjqwghf7zxvfkxq5a6sr65g0gdkv768p83mhsnt0msszapamzx2qvuxqqqqrt49lmtcqqqqqqqqqqq86qq9qcqzpgdq523jhxapqwpshjmt9de6q9qyyssqv30v9dmqjgjgnc2xupsvhhmyqtjgf2tm3mgh9gqxwrfhef4yamczn6hauvvwzqwxhda6mdrjamcg72rz2f7nrrgwkllnf40x0703yecq298zxl
 ```
 
-## Security Considerations
-
-- Keep your mnemonic and API key secure
-- Use mainnet only for production transactions
-- Verify payment details before sending
-- Consider using testnet for development and testing
-
 ## Requirements
 
 - Go 1.21+
