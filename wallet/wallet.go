@@ -7,7 +7,6 @@ import (
 	"os"
 	"time"
 
-	breez_sdk_common "github.com/breez/breez-sdk-spark-go/breez_sdk_common"
 	breez_sdk_spark "github.com/breez/breez-sdk-spark-go/breez_sdk_spark"
 	"github.com/breez/tiny-spark/config"
 )
@@ -24,14 +23,14 @@ type Balance struct {
 }
 
 type Transaction struct {
-	ID            string
-	AmountSats    int64
-	FeeSats       int64
-	Status        string
-	Type          string
-	Description   string
-	Timestamp     time.Time
-	PaymentHash   string
+	ID          string
+	AmountSats  int64
+	FeeSats     int64
+	Status      string
+	Type        string
+	Description string
+	Timestamp   time.Time
+	PaymentHash string
 }
 
 type ReceivePaymentResponse struct {
@@ -206,7 +205,7 @@ func (w *Wallet) GetTransactions(ctx context.Context, limit int) ([]*Transaction
 		case breez_sdk_spark.PaymentStatusFailed:
 			statusStr = "Failed"
 		default:
-			statusStr = string(payment.Status)
+			statusStr = paymentStatusString(payment.Status)
 		}
 
 		// Use generic description for now
@@ -314,11 +313,11 @@ func (w *Wallet) SendLightningInvoice(ctx context.Context, bolt11 string) (*Paym
 	}
 
 	return &PaymentResponse{
-		PaymentHash:   response.Payment.Id,
-		AmountSats:    response.Payment.Amount.Int64(),
-		FeeSats:       response.Payment.Fees.Int64(),
-		Status:        string(response.Payment.Status),
-		CompletedAt:   time.Unix(int64(response.Payment.Timestamp), 0),
+		PaymentHash: response.Payment.Id,
+		AmountSats:  response.Payment.Amount.Int64(),
+		FeeSats:     response.Payment.Fees.Int64(),
+		Status:      paymentStatusString(response.Payment.Status),
+		CompletedAt: time.Unix(int64(response.Payment.Timestamp), 0),
 	}, nil
 }
 
@@ -354,11 +353,11 @@ func (w *Wallet) SendBitcoinAddress(ctx context.Context, address string, amountS
 	}
 
 	return &PaymentResponse{
-		PaymentHash:   response.Payment.Id,
-		AmountSats:    response.Payment.Amount.Int64(),
-		FeeSats:       response.Payment.Fees.Int64(),
-		Status:        string(response.Payment.Status),
-		CompletedAt:   time.Unix(int64(response.Payment.Timestamp), 0),
+		PaymentHash: response.Payment.Id,
+		AmountSats:  response.Payment.Amount.Int64(),
+		FeeSats:     response.Payment.Fees.Int64(),
+		Status:      paymentStatusString(response.Payment.Status),
+		CompletedAt: time.Unix(int64(response.Payment.Timestamp), 0),
 	}, nil
 }
 
@@ -389,11 +388,11 @@ func (w *Wallet) SendSparkAddress(ctx context.Context, sparkAddress string, amou
 	}
 
 	return &PaymentResponse{
-		PaymentHash:   response.Payment.Id,
-		AmountSats:    response.Payment.Amount.Int64(),
-		FeeSats:       response.Payment.Fees.Int64(),
-		Status:        string(response.Payment.Status),
-		CompletedAt:   time.Unix(int64(response.Payment.Timestamp), 0),
+		PaymentHash: response.Payment.Id,
+		AmountSats:  response.Payment.Amount.Int64(),
+		FeeSats:     response.Payment.Fees.Int64(),
+		Status:      paymentStatusString(response.Payment.Status),
+		CompletedAt: time.Unix(int64(response.Payment.Timestamp), 0),
 	}, nil
 }
 
@@ -426,7 +425,7 @@ func (w *Wallet) GetPayment(ctx context.Context, paymentID string) (*Transaction
 	case breez_sdk_spark.PaymentStatusFailed:
 		statusStr = "Failed"
 	default:
-		statusStr = string(payment.Status)
+		statusStr = paymentStatusString(payment.Status)
 	}
 
 	return &Transaction{
@@ -450,11 +449,12 @@ func (w *Wallet) LnUrlPay(ctx context.Context, lnurlAddress string, amountSats u
 	}
 
 	switch inputType := input.(type) {
-	case breez_sdk_common.InputTypeLightningAddress:
+	case breez_sdk_spark.InputTypeLightningAddress:
 		validateSuccessActionUrl := true
+		amount := big.NewInt(int64(amountSats))
 
 		prepareReq := breez_sdk_spark.PrepareLnurlPayRequest{
-			AmountSats:               amountSats,
+			Amount:                   amount,
 			PayRequest:               inputType.Field0.PayRequest,
 			Comment:                  &comment,
 			ValidateSuccessActionUrl: &validateSuccessActionUrl,
@@ -476,11 +476,11 @@ func (w *Wallet) LnUrlPay(ctx context.Context, lnurlAddress string, amountSats u
 		}
 
 		return &PaymentResponse{
-			PaymentHash:   response.Payment.Id,
-			AmountSats:    response.Payment.Amount.Int64(),
-			FeeSats:       response.Payment.Fees.Int64(),
-			Status:        string(response.Payment.Status),
-			CompletedAt:   time.Unix(int64(response.Payment.Timestamp), 0),
+			PaymentHash: response.Payment.Id,
+			AmountSats:  response.Payment.Amount.Int64(),
+			FeeSats:     response.Payment.Fees.Int64(),
+			Status:      paymentStatusString(response.Payment.Status),
+			CompletedAt: time.Unix(int64(response.Payment.Timestamp), 0),
 		}, nil
 	}
 
@@ -501,11 +501,11 @@ func (w *Wallet) GetTokenBalances(ctx context.Context) ([]*TokenBalance, error) 
 	var balances []*TokenBalance
 	for tokenId, tokenBalance := range info.TokenBalances {
 		balances = append(balances, &TokenBalance{
-			TokenID:   tokenId,
-			Balance:   tokenBalance.Balance.String(),
-			Name:      tokenBalance.TokenMetadata.Name,
-			Ticker:    tokenBalance.TokenMetadata.Ticker,
-			Decimals:  int(tokenBalance.TokenMetadata.Decimals),
+			TokenID:  tokenId,
+			Balance:  tokenBalance.Balance.String(),
+			Name:     tokenBalance.TokenMetadata.Name,
+			Ticker:   tokenBalance.TokenMetadata.Ticker,
+			Decimals: int(tokenBalance.TokenMetadata.Decimals),
 		})
 	}
 
@@ -533,6 +533,19 @@ func createWorkingDir(path string) error {
 	}
 
 	return nil
+}
+
+func paymentStatusString(status breez_sdk_spark.PaymentStatus) string {
+	switch status {
+	case breez_sdk_spark.PaymentStatusPending:
+		return "Pending"
+	case breez_sdk_spark.PaymentStatusCompleted:
+		return "Complete"
+	case breez_sdk_spark.PaymentStatusFailed:
+		return "Failed"
+	default:
+		return fmt.Sprintf("unknown(%d)", status)
+	}
 }
 
 // networkFromString converts network string to SDK Network type

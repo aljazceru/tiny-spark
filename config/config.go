@@ -8,9 +8,9 @@ import (
 )
 
 type Config struct {
-	BreezAPIKey  string
-	BreezMnemonic string
-	BreezNetwork string
+	BreezAPIKey     string
+	BreezMnemonic   string
+	BreezNetwork    string
 	BreezWorkingDir string
 }
 
