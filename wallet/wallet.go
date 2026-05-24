@@ -2,6 +2,7 @@ package wallet
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"os"
@@ -90,7 +91,7 @@ func NewWallet(cfg *config.Config) (*Wallet, error) {
 	sdk, err := breez_sdk_spark.Connect(request)
 
 	// Handle error using official SDK pattern
-	if sdkErr := err.(*breez_sdk_spark.SdkError); sdkErr != nil {
+	if isSdkError(err) {
 		return nil, fmt.Errorf("failed to connect to Breez SDK: %w", err)
 	}
 
@@ -119,7 +120,7 @@ func (w *Wallet) GetBalance(ctx context.Context) (*Balance, error) {
 	info, err := w.sdk.GetInfo(req)
 
 	// Handle error using official SDK pattern
-	if sdkErr := err.(*breez_sdk_spark.SdkError); sdkErr != nil {
+	if isSdkError(err) {
 		return nil, fmt.Errorf("failed to get wallet info: %w", err)
 	}
 
@@ -161,7 +162,7 @@ func (w *Wallet) GetTransactions(ctx context.Context, limit int) ([]*Transaction
 	response, err := w.sdk.ListPayments(req)
 
 	// Handle error using official SDK pattern
-	if sdkErr := err.(*breez_sdk_spark.SdkError); sdkErr != nil {
+	if isSdkError(err) {
 		return nil, fmt.Errorf("failed to get transaction history: %w", err)
 	}
 
@@ -236,7 +237,7 @@ func (w *Wallet) ReceiveLightningInvoice(ctx context.Context, amountSats uint64,
 	}
 
 	response, err := w.sdk.ReceivePayment(request)
-	if sdkErr := err.(*breez_sdk_spark.SdkError); sdkErr != nil {
+	if isSdkError(err) {
 		return nil, fmt.Errorf("failed to create lightning invoice: %w", err)
 	}
 
@@ -256,7 +257,7 @@ func (w *Wallet) ReceiveBitcoinAddress(ctx context.Context) (*ReceivePaymentResp
 	}
 
 	response, err := w.sdk.ReceivePayment(request)
-	if sdkErr := err.(*breez_sdk_spark.SdkError); sdkErr != nil {
+	if isSdkError(err) {
 		return nil, fmt.Errorf("failed to create bitcoin address: %w", err)
 	}
 
@@ -276,7 +277,7 @@ func (w *Wallet) ReceiveSparkAddress(ctx context.Context) (*ReceivePaymentRespon
 	}
 
 	response, err := w.sdk.ReceivePayment(request)
-	if sdkErr := err.(*breez_sdk_spark.SdkError); sdkErr != nil {
+	if isSdkError(err) {
 		return nil, fmt.Errorf("failed to create spark address: %w", err)
 	}
 
@@ -298,7 +299,7 @@ func (w *Wallet) SendLightningInvoice(ctx context.Context, bolt11 string) (*Paym
 	}
 
 	prepareResp, err := w.sdk.PrepareSendPayment(prepareReq)
-	if sdkErr := err.(*breez_sdk_spark.SdkError); sdkErr != nil {
+	if isSdkError(err) {
 		return nil, fmt.Errorf("failed to prepare lightning payment: %w", err)
 	}
 
@@ -308,7 +309,7 @@ func (w *Wallet) SendLightningInvoice(ctx context.Context, bolt11 string) (*Paym
 	}
 
 	response, err := w.sdk.SendPayment(sendReq)
-	if sdkErr := err.(*breez_sdk_spark.SdkError); sdkErr != nil {
+	if isSdkError(err) {
 		return nil, fmt.Errorf("failed to send lightning payment: %w", err)
 	}
 
@@ -333,7 +334,7 @@ func (w *Wallet) SendBitcoinAddress(ctx context.Context, address string, amountS
 	}
 
 	prepareResp, err := w.sdk.PrepareSendPayment(prepareReq)
-	if sdkErr := err.(*breez_sdk_spark.SdkError); sdkErr != nil {
+	if isSdkError(err) {
 		return nil, fmt.Errorf("failed to prepare onchain payment: %w", err)
 	}
 
@@ -348,7 +349,7 @@ func (w *Wallet) SendBitcoinAddress(ctx context.Context, address string, amountS
 	}
 
 	response, err := w.sdk.SendPayment(sendReq)
-	if sdkErr := err.(*breez_sdk_spark.SdkError); sdkErr != nil {
+	if isSdkError(err) {
 		return nil, fmt.Errorf("failed to send onchain payment: %w", err)
 	}
 
@@ -373,7 +374,7 @@ func (w *Wallet) SendSparkAddress(ctx context.Context, sparkAddress string, amou
 	}
 
 	prepareResp, err := w.sdk.PrepareSendPayment(prepareReq)
-	if sdkErr := err.(*breez_sdk_spark.SdkError); sdkErr != nil {
+	if isSdkError(err) {
 		return nil, fmt.Errorf("failed to prepare spark payment: %w", err)
 	}
 
@@ -383,7 +384,7 @@ func (w *Wallet) SendSparkAddress(ctx context.Context, sparkAddress string, amou
 	}
 
 	response, err := w.sdk.SendPayment(sendReq)
-	if sdkErr := err.(*breez_sdk_spark.SdkError); sdkErr != nil {
+	if isSdkError(err) {
 		return nil, fmt.Errorf("failed to send spark payment: %w", err)
 	}
 
@@ -403,7 +404,7 @@ func (w *Wallet) GetPayment(ctx context.Context, paymentID string) (*Transaction
 	}
 
 	response, err := w.sdk.GetPayment(req)
-	if sdkErr := err.(*breez_sdk_spark.SdkError); sdkErr != nil {
+	if isSdkError(err) {
 		return nil, fmt.Errorf("failed to get payment: %w", err)
 	}
 
@@ -444,7 +445,7 @@ func (w *Wallet) GetPayment(ctx context.Context, paymentID string) (*Transaction
 func (w *Wallet) LnUrlPay(ctx context.Context, lnurlAddress string, amountSats uint64, comment string) (*PaymentResponse, error) {
 	// Parse the LNURL address
 	input, err := w.sdk.Parse(lnurlAddress)
-	if sdkErr := err.(*breez_sdk_spark.SdkError); sdkErr != nil {
+	if isSdkError(err) {
 		return nil, fmt.Errorf("failed to parse lnurl address: %w", err)
 	}
 
@@ -461,7 +462,7 @@ func (w *Wallet) LnUrlPay(ctx context.Context, lnurlAddress string, amountSats u
 		}
 
 		prepareResp, err := w.sdk.PrepareLnurlPay(prepareReq)
-		if sdkErr := err.(*breez_sdk_spark.SdkError); sdkErr != nil {
+		if isSdkError(err) {
 			return nil, fmt.Errorf("failed to prepare lnurl pay: %w", err)
 		}
 
@@ -471,7 +472,7 @@ func (w *Wallet) LnUrlPay(ctx context.Context, lnurlAddress string, amountSats u
 		}
 
 		response, err := w.sdk.LnurlPay(payReq)
-		if sdkErr := err.(*breez_sdk_spark.SdkError); sdkErr != nil {
+		if isSdkError(err) {
 			return nil, fmt.Errorf("failed to send lnurl payment: %w", err)
 		}
 
@@ -494,7 +495,7 @@ func (w *Wallet) GetTokenBalances(ctx context.Context) ([]*TokenBalance, error) 
 		EnsureSynced: &ensureSynced,
 	})
 
-	if sdkErr := err.(*breez_sdk_spark.SdkError); sdkErr != nil {
+	if isSdkError(err) {
 		return nil, fmt.Errorf("failed to get token balances: %w", err)
 	}
 
@@ -533,6 +534,14 @@ func createWorkingDir(path string) error {
 	}
 
 	return nil
+}
+
+func isSdkError(err error) bool {
+	if err == nil {
+		return false
+	}
+	var sdkErr *breez_sdk_spark.SdkError
+	return errors.As(err, &sdkErr)
 }
 
 func paymentStatusString(status breez_sdk_spark.PaymentStatus) string {
